@@ -127,6 +127,7 @@ void loop() {
   if (value == LOW) {
     Serial.println("button0State LOW");
     controller.stopMove();
+    delay(120);
     return;
   }
 

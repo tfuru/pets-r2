@@ -18,6 +18,8 @@ git clone git@github.com:mathertel/RotaryEncoder.git
 5. PETS の 電源をいれて かごに設置する
 6. PETS の 回路設定をして 開始ぼたんを押す
 7. 開始と同時に 本体も動き始める
+8. バッテリー切れ等で　動作がオカシイ場合 緊急停止ボタン を押すと マイコンがリセットされる
+   
 
 # 備考
 1. 前後, 左右旋回 は 乗っている人の体重によって距離がかわる
@@ -27,3 +29,4 @@ git clone git@github.com:mathertel/RotaryEncoder.git
    2. 乾電池の残陽不足
 
 
+   
