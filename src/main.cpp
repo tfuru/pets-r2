@@ -37,7 +37,7 @@ IRAM_ATTR void checkPositionR() {
 }
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(76800);
   while (!Serial)
     ;
 
@@ -45,6 +45,9 @@ void setup() {
   // wifiUtil.setupWiFi(WIFI_SSID);
   // Serial.print("WiFi connected, IP = "); Serial.println(WiFi.localIP());
   // delay(1000);
+
+  // IO0 ボタン 割り込み
+  pinMode(BUTTON_0, INPUT_PULLUP);
 
   // モーター操作 初期化 0,2,4 
   controller.begin();
@@ -65,12 +68,12 @@ void setup() {
 void motor(int l, int r) {
   int c = PETSR2_MOVE_DEFAULT;
   if (l == -1 && r == 1) {
-    // 左に曲がる
-    c = PETSR2_MOVE_LEFT_ROTATION;
-  }
-  else if (l == 1 && r == -1) {
     // 右に曲がる
     c = PETSR2_MOVE_RIGHT_ROTATION;
+  }
+  else if (l == 1 && r == -1) {
+    // 左に曲がる
+    c = PETSR2_MOVE_LEFT_ROTATION;
   }
   else if (l == -1 && r == -1) {
     // 前
@@ -83,9 +86,6 @@ void motor(int l, int r) {
   else if (l == 0 && r == 0) {
     c = PETSR2_MOVE_STOP;
   }
-  else {
-    ;
-  }
   
   /*
   if (data.value == c) {
@@ -96,18 +96,23 @@ void motor(int l, int r) {
 
   switch (data.value) {
     case PETSR2_MOVE_FORWARD:
+      Serial.println("PETSR2_MOVE_FORWARD");
       controller.forward();
       break;
     case PETSR2_MOVE_BACKWARD:
+      Serial.println("PETSR2_MOVE_BACKWARD");
       controller.backward();
       break;
     case PETSR2_MOVE_STOP:
+      // Serial.println("PETSR2_MOVE_STOP");
       controller.stopMove();
       break;
     case PETSR2_MOVE_RIGHT_ROTATION:
+      Serial.println("PETSR2_MOVE_RIGHT_ROTATION");
       controller.rightRotation();
       break;
     case PETSR2_MOVE_LEFT_ROTATION:
+      Serial.println("PETSR2_MOVE_LEFT_ROTATION");
       controller.leftRotation();
       break;        
     default:
@@ -117,9 +122,17 @@ void motor(int l, int r) {
 }
 
 void loop() {
+  // Serial.println("loop");
+  int value = digitalRead(BUTTON_0);
+  if (value == LOW) {
+    Serial.println("button0State LOW");
+    controller.stopMove();
+    return;
+  }
+
   encoderL->tick();
   int newPosL = encoderL->getPosition();
-  if (posL != newPosL) {
+  if (posL != newPosL) { 
     // v: -1 前進 v: 1 後進
     vL = (int)(encoderL->getDirection());
     posL = newPosL;

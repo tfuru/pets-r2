@@ -31,4 +31,6 @@ typedef struct {
 #define ENCODER_L_A D7
 #define ENCODER_L_B D8
 
+#define BUTTON_0 0
+
 #endif
