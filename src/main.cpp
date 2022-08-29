@@ -14,8 +14,9 @@ const char* WIFI_SSID = "PETS-R2";
 // ロータリーエンコーダー
 #include <RotaryEncoder.h>
 
-RotaryEncoder *encoderL = nullptr;
-RotaryEncoder *encoderR = nullptr;
+// ロータリーエンコーダー 初期化
+RotaryEncoder encoderL = RotaryEncoder(ENCODER_L_A, ENCODER_L_B, RotaryEncoder::LatchMode::TWO03);
+RotaryEncoder encoderR = RotaryEncoder(ENCODER_R_A, ENCODER_R_B, RotaryEncoder::LatchMode::TWO03);
 
 static int posL = 0;
 static int posR = 0;
@@ -26,18 +27,20 @@ static int vR = 0;
 unsigned long TIMEOUT_SEC = 3L;
 unsigned long oldTimeL = 0, oldTimeR = 0;
 
-IRAM_ATTR void checkPositionL() {
+void IRAM_ATTR checkPositionL() {
   // just call tick() to check the state.
-  encoderL->tick();
+  // encoderL->tick();
+  encoderL.tick();
 }
 
-IRAM_ATTR void checkPositionR() {
+void IRAM_ATTR  checkPositionR() {
   // just call tick() to check the state.
-  encoderR->tick();
+  // encoderR->tick();
+  encoderR.tick();
 }
 
 void setup() {
-  Serial.begin(76800);
+  Serial.begin(115200);
   while (!Serial)
     ;
 
@@ -52,16 +55,12 @@ void setup() {
   // モーター操作 初期化 0,2,4 
   controller.begin();
 
-  // ロータリーエンコーダー 初期化
-  encoderL = new RotaryEncoder(ENCODER_L_A, ENCODER_L_B, RotaryEncoder::LatchMode::TWO03);
-  encoderR = new RotaryEncoder(ENCODER_R_A, ENCODER_R_B, RotaryEncoder::LatchMode::TWO03);
-
   // register interrupt routine
-  attachInterrupt(digitalPinToInterrupt(ENCODER_L_A), checkPositionL, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(ENCODER_L_B), checkPositionL, CHANGE);
+  attachInterrupt(ENCODER_L_A, checkPositionL, CHANGE);
+  attachInterrupt(ENCODER_L_B, checkPositionL, CHANGE);
 
-  attachInterrupt(digitalPinToInterrupt(ENCODER_R_A), checkPositionR, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(ENCODER_R_B), checkPositionR, CHANGE);  
+  attachInterrupt(ENCODER_R_A, checkPositionR, CHANGE);
+  attachInterrupt(ENCODER_R_B, checkPositionR, CHANGE);
 }
 
 // 移動の実行
@@ -131,11 +130,11 @@ void loop() {
     return;
   }
 
-  encoderL->tick();
-  int newPosL = encoderL->getPosition();
+  encoderL.tick();
+  int newPosL = encoderL.getPosition();
   if (posL != newPosL) { 
     // v: -1 前進 v: 1 後進
-    vL = (int)(encoderL->getDirection());
+    vL = (int)(encoderL.getDirection());
     posL = newPosL;
   } else {
     // 変化がなかった
@@ -146,11 +145,11 @@ void loop() {
     }
   }
 
-  encoderR->tick(); 
-  int newPosR = encoderR->getPosition();
+  encoderR.tick(); 
+  int newPosR = encoderR.getPosition();
   if (posR != newPosR) {
     // v: -1 前進 v: 1 後進
-    vR = (int)(encoderR->getDirection());
+    vR = (int)(encoderR.getDirection());
     posR = newPosR;
   }
   else {

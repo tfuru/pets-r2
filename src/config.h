@@ -26,10 +26,10 @@ typedef struct {
 #define PETSR2_MOVE_KEY_LEFT_ROTATION 'a'
 
 // ロータリーエンコーダー
-#define ENCODER_R_A D5
-#define ENCODER_R_B D6
-#define ENCODER_L_A D7
-#define ENCODER_L_B D8
+#define ENCODER_R_A 12
+#define ENCODER_R_B 13
+#define ENCODER_L_A 27
+#define ENCODER_L_B 14
 
 #define BUTTON_0 0
 
