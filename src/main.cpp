@@ -1,18 +1,17 @@
 #include <Arduino.h>
+#include <RotaryEncoder.h>
 #include "config.h"
-#include "Controller.h"
-
-Controller controller;
-PETSR2_STRUCT_COMAND data;
 
 #include "WifiUtil.h"
+#include "Motor.h"
+
+Motor controller;
+PETSR2_STRUCT_COMAND data;
+
 WifiUtil wifiUtil;
 
 // AP モード SSID
 const char* WIFI_SSID = "PETS-R2";
-
-// ロータリーエンコーダー
-#include <RotaryEncoder.h>
 
 // ロータリーエンコーダー 初期化
 RotaryEncoder encoderL = RotaryEncoder(ENCODER_L_A, ENCODER_L_B, RotaryEncoder::LatchMode::TWO03);
@@ -52,7 +51,7 @@ void setup() {
   // IO0 ボタン 割り込み
   pinMode(BUTTON_0, INPUT_PULLUP);
 
-  // モーター操作 初期化 0,2,4 
+  // モーター操作 初期化 
   controller.begin();
 
   // register interrupt routine
@@ -119,6 +118,7 @@ void motor(int l, int r) {
       break;
   }
 }
+
 
 void loop() {
   // Serial.println("loop");

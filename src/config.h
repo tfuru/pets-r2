@@ -33,4 +33,13 @@ typedef struct {
 
 #define BUTTON_0 0
 
+// モーター
+#define MOTOR_DR1 4
+#define MOTOR_PWM1 32
+#define MOTOR_EN1 17
+
+#define MOTOR_DR2 5
+#define MOTOR_PWM2 33
+#define MOTOR_EN2 19
+
 #endif
