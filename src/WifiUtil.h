@@ -23,6 +23,8 @@ public:
     void resetSettings();
     static void configModeCallback(WiFiManager *myWiFiManager);
 
+    void setupWiFiAP(const char* ssid, const char* password);
+    
     void setupMDNS(const char* name, uint16_t httpPort,uint16_t oscPort);
 private:
     WiFiManager _wifiManager;

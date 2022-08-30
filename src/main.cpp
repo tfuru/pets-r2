@@ -5,13 +5,26 @@
 #include "WifiUtil.h"
 #include "Motor.h"
 
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+#include <AsyncJson.h>
+
+const int HTTP_PORT = 80;
+AsyncWebServer webServer(HTTP_PORT);
+
 Motor controller;
 PETSR2_STRUCT_COMAND data;
 
 WifiUtil wifiUtil;
 
 // AP モード SSID
-const char* WIFI_SSID = "PETS-R2";
+const char* WIFI_AP_SSID = "PETS-R2";
+const char* WIFI_AP_PASSWD = "pets-r2";
+
+// mDNS ホスト名
+const char* MDNS_HOST = "pets-r2";
+// OSC受信 設定
+const int OSC_BIND_PORT = 54345;
 
 // ロータリーエンコーダー 初期化
 RotaryEncoder encoderL = RotaryEncoder(ENCODER_L_A, ENCODER_L_B, RotaryEncoder::LatchMode::TWO03);
@@ -25,6 +38,25 @@ static int vR = 0;
 
 unsigned long TIMEOUT_SEC = 3L;
 unsigned long oldTimeL = 0, oldTimeR = 0;
+
+void webServerSetup() {
+  Serial.println("webServerSetup");
+
+  // mDNS 設定
+  wifiUtil.setupMDNS(MDNS_HOST, HTTP_PORT, OSC_BIND_PORT);
+
+  // API 実装 ---- 
+  {
+    // IPAddress 取得 API
+    // curl -X POST -H "Content-Type: application/json" -d '{}' http://connecteddoll.local/api/ip    
+    AsyncCallbackJsonWebHandler* handler = new AsyncCallbackJsonWebHandler("/api/ip", [](AsyncWebServerRequest *request, JsonVariant &json) {
+      IPAddress localIP = WiFi.localIP();
+      String output = "{\"status\":\"OK\",\"ip\":\"" + localIP.toString() + "\"}";
+      request->send(200, "application/json", output);
+    });
+    webServer.addHandler(handler);
+  }
+}
 
 void IRAM_ATTR checkPositionL() {
   // just call tick() to check the state.
@@ -44,9 +76,10 @@ void setup() {
     ;
 
   // WiFi 接続設定
-  wifiUtil.setupWiFi(WIFI_SSID);
+  wifiUtil.setupWiFiAP(WIFI_AP_SSID, WIFI_AP_PASSWD);
   Serial.print("WiFi connected, IP = "); Serial.println(WiFi.localIP());
   delay(1000);
+  webServerSetup();
 
   // IO0 ボタン 割り込み
   pinMode(BUTTON_0, INPUT_PULLUP);
