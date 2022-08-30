@@ -44,9 +44,9 @@ void setup() {
     ;
 
   // WiFi 接続設定
-  // wifiUtil.setupWiFi(WIFI_SSID);
-  // Serial.print("WiFi connected, IP = "); Serial.println(WiFi.localIP());
-  // delay(1000);
+  wifiUtil.setupWiFi(WIFI_SSID);
+  Serial.print("WiFi connected, IP = "); Serial.println(WiFi.localIP());
+  delay(1000);
 
   // IO0 ボタン 割り込み
   pinMode(BUTTON_0, INPUT_PULLUP);

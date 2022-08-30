@@ -36,13 +36,6 @@ bool Motor::begin() {
     pinMode(MOTOR_PWM2, OUTPUT);
     digitalWrite(MOTOR_PWM2, HIGH);
 
-    // stopMove();
-
-    // forward();
-    // backward();
-    // rightRotation();
-    // leftRotation();
-
     return true;
 }
 
@@ -76,14 +69,16 @@ void Motor::rightRotation() {
     digitalWrite(MOTOR_DR1, HIGH);
     digitalWrite(MOTOR_EN1, HIGH);
 
-    digitalWrite(MOTOR_EN2, LOW);
-}
+    digitalWrite(MOTOR_DR2, LOW);
+    digitalWrite(MOTOR_EN2, HIGH);
+} 
 
 void Motor::leftRotation() {
     Serial.println("Motor::leftRotation");
 
+    digitalWrite(MOTOR_DR1, LOW);
+    digitalWrite(MOTOR_EN1, HIGH);
+
     digitalWrite(MOTOR_DR2, HIGH);
     digitalWrite(MOTOR_EN2, HIGH);
-
-    digitalWrite(MOTOR_EN1, LOW);
-}
+} 
