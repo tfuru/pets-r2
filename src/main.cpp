@@ -36,11 +36,35 @@ static int posR = 0;
 static int vL = 0;
 static int vR = 0;
 
-unsigned long TIMEOUT_SEC = 3L;
+static unsigned long TIMEOUT_SEC = 3L;
 unsigned long oldTimeL = 0, oldTimeR = 0;
 
+// コマンドリスト 3x3 
+volatile int CmdList[100];
+volatile int CmdListIndex = 0;
+volatile int oldCmdListIndex = -1;
+
+// 割り込みタイマー
+hw_timer_t * timer = NULL;
+portMUX_TYPE timeMux = portMUX_INITIALIZER_UNLOCKED;
+
+// 1000000us = 1000ms = 1s
+uint64_t alarmValue = 1000000 * 0.5;
+
+void motor(int cmd);
+void IRAM_ATTR onTimer();
+void timerSetup() {
+  // 80MHz / 80 = 1MHz (1us)
+  timer = timerBegin(0, 80, true);
+  timerAttachInterrupt(timer, &onTimer, true);
+  // 1000000us = 1000ms = 1s
+  uint64_t alarmValue = 1000000;
+  timerAlarmWrite(timer, alarmValue, true);
+  timerAlarmEnable(timer);
+}
+
 void webServerSetup() {
-  Serial.println("webServerSetup");
+  Serial.println(F("webServerSetup"));
 
   // mDNS 設定
   wifiUtil.setupMDNS(MDNS_HOST, HTTP_PORT, OSC_BIND_PORT);
@@ -81,6 +105,9 @@ void setup() {
   delay(1000);
   webServerSetup();
 
+  // 割り込みタイマー 開始 
+  timerSetup();
+
   // IO0 ボタン 割り込み
   pinMode(BUTTON_0, INPUT_PULLUP);
 
@@ -96,7 +123,7 @@ void setup() {
 }
 
 // 移動の実行
-void motor(int l, int r) {
+int command(int l, int r) {
   int c = PETSR2_MOVE_DEFAULT;
   if (l == -1 && r == 1) {
     // 右に曲がる
@@ -118,32 +145,34 @@ void motor(int l, int r) {
     c = PETSR2_MOVE_STOP;
   }
   
-  /*
   if (data.value == c) {
-    return;
-  }
-  */
+    return PETSR2_MOVE_DEFAULT;
+  }  
   data.value = c;
+  return c;
+}
 
-  switch (data.value) {
+void motor(volatile int cmd) {
+  Serial.print(F("motor ")); Serial.println(cmd);
+  switch (cmd) {
     case PETSR2_MOVE_FORWARD:
-      Serial.println("PETSR2_MOVE_FORWARD");
+      Serial.println(F("PETSR2_MOVE_FORWARD"));
       controller.forward();
       break;
     case PETSR2_MOVE_BACKWARD:
-      Serial.println("PETSR2_MOVE_BACKWARD");
+      Serial.println(F("PETSR2_MOVE_BACKWARD"));
       controller.backward();
       break;
     case PETSR2_MOVE_STOP:
-      // Serial.println("PETSR2_MOVE_STOP");
+      // Serial.println(F("PETSR2_MOVE_STOP"));
       controller.stopMove();
       break;
     case PETSR2_MOVE_RIGHT_ROTATION:
-      Serial.println("PETSR2_MOVE_RIGHT_ROTATION");
+      Serial.println(F("PETSR2_MOVE_RIGHT_ROTATION"));
       controller.rightRotation();
       break;
     case PETSR2_MOVE_LEFT_ROTATION:
-      Serial.println("PETSR2_MOVE_LEFT_ROTATION");
+      Serial.println(F("PETSR2_MOVE_LEFT_ROTATION"));
       controller.leftRotation();
       break;        
     default:
@@ -152,15 +181,30 @@ void motor(int l, int r) {
   }
 }
 
+void IRAM_ATTR onTimer() {
+  portENTER_CRITICAL_ISR(&timeMux);
+  if (CmdListIndex > 0) {
+      motor(CmdList[CmdListIndex]);
+      CmdListIndex--;
+      if (CmdListIndex < 0) CmdListIndex = 0;
+  }
+  portEXIT_CRITICAL_ISR(&timeMux);
+}
 
 void loop() {
-  // Serial.println("loop");
+  
   int value = digitalRead(BUTTON_0);
   if (value == LOW) {
-    Serial.println("button0State LOW");
-    controller.stopMove();
-    delay(120);
-    return;
+    portENTER_CRITICAL(&timeMux);
+    CmdList[CmdListIndex] = command(-1, 1);
+    CmdListIndex++;
+    if (CmdListIndex > 100) CmdListIndex = 100;
+    portEXIT_CRITICAL(&timeMux);
+    delay(300);
+  }
+  if (CmdListIndex != oldCmdListIndex) {
+    Serial.print(F("CmdListIndex ")); Serial.println(CmdListIndex);
+    oldCmdListIndex = CmdListIndex;
   }
 
   encoderL.tick();
@@ -194,5 +238,13 @@ void loop() {
     }
   }
 
-  motor(vL, vR);
+  volatile int c = command(vL, vR);
+  if (c != PETSR2_MOVE_DEFAULT) {
+    portENTER_CRITICAL(&timeMux);
+    CmdList[CmdListIndex] = c;
+    CmdListIndex++;
+    if (CmdListIndex > 100) CmdListIndex = 100;
+    portEXIT_CRITICAL(&timeMux);
+  }
+
 }
